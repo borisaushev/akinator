@@ -26,12 +26,12 @@ void setLeft(treeNode_t* node, treeNode_t* left) {
     node->left = left;
 }
 
-treeElType getData(treeNode_t* node) {
+treeElType_t getData(treeNode_t* node) {
     assert(node);
     return node->data;
 }
 
-void setData(treeNode_t* node, treeElType data) {
+void setData(treeNode_t* node, treeElType_t data) {
     assert(node);
     assert(data);
 
@@ -55,7 +55,7 @@ error_t printTree(treeNode_t *root) {
     return SUCCESS;
 }
 
-error_t createNode(treeElType data, treeNode_t** result) {
+error_t createNode(treeElType_t data, treeNode_t** result) {
     assert(result);
     *result = (treeNode_t*)calloc(1, sizeof(treeNode_t));
 
@@ -99,7 +99,7 @@ error_t validateTree(treeNode_t* root) {
     return SUCCESS;
 }
 
-static error_t insertValue(treeNode_t** cur, treeElType val) {
+static error_t insertValue(treeNode_t** cur, treeElType_t val) {
     if (*cur == NULL) {
         SAFE_CALL(createNode(val, cur));
 
@@ -117,7 +117,7 @@ static error_t insertValue(treeNode_t** cur, treeElType val) {
     }
 }
 
-error_t treeAdd(treeNode_t* root, treeElType val) {
+error_t treeAdd(treeNode_t* root, treeElType_t val) {
     TREE_VALID(root);
     TREE_DUMP(root, "BEFORE ADD", SUCCESS);
 

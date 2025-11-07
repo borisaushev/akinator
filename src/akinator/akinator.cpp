@@ -3,7 +3,7 @@
 #include "treeDump.h"
 #include "treeSctruct.h"
 
-static void getNextNode(treeNode_t** cur, char inp[50]) {
+static void getNextNode(treeNode_t** cur, char inp[MAX_INPUT_SIZE]) {
     if (strcmp(inp, "yes") == 0) {
         *cur = getLeft(*cur);
     }
@@ -15,19 +15,19 @@ static void getNextNode(treeNode_t** cur, char inp[50]) {
     }
 }
 
-static void readUserAnswer(char inp[50]) {
+static void readUserAnswer(char inp[MAX_INPUT_SIZE]) {
     char lastChar = 0;
     scanf("%[^\n]%c", inp, &lastChar);
 }
 
-error_t readNode(treeNode_t** cur, FILE* file) {
+static error_t readNode(treeNode_t** cur, FILE* file) {
     char firstCh = 0;
     if (fscanf(file, "%c", &firstCh) != 1) {
         RETURN_ERR(INVALID_INPUT, "UNABLE TO PARSE akinator file");
     }
 
     if (firstCh == '(') {
-        char inp[50] = {};
+        char inp[MAX_INPUT_SIZE] = {};
         fscanf(file, "\"%[^\"]\"", inp);
         SAFE_CALL(createNode(inp, cur));
         readNode(&(*cur)->left, file);
@@ -44,7 +44,7 @@ error_t readNode(treeNode_t** cur, FILE* file) {
     return SUCCESS;
 }
 
-error_t initTree(treeNode_t** root) {
+static error_t initTree(treeNode_t** root) {
     FILE* file = fopen(AKINATOR_FILE_PATH, "r");
     if (file == NULL) {
         RETURN_ERR(NULL_PTR, "unable to open file");
@@ -57,7 +57,7 @@ error_t initTree(treeNode_t** root) {
     return SUCCESS;
 }
 
-error_t addNewCharacter(treeNode_t *root, treeNode_t *cur, char inp[50]) {
+static error_t addNewCharacter(treeNode_t *root, treeNode_t *cur, char inp[MAX_INPUT_SIZE]) {
     TREE_DUMP(root, "BEFORE ADD NEW CHARACTER", SUCCESS);
 
     printf("Who was your character?\n");
@@ -69,7 +69,8 @@ error_t addNewCharacter(treeNode_t *root, treeNode_t *cur, char inp[50]) {
     treeNode_t* prevCharacterNode = {};
     SAFE_CALL(createNode(getData(cur), &prevCharacterNode));
 
-    printf("Whats the difference between %s and %s?\n", getData(newCharacterNode), getData(cur));
+    printf("Whats the difference between %s and %s?\n",
+           getData(newCharacterNode), getData(cur));
     printf("%s...", getData(newCharacterNode));
     readUserAnswer(inp);
     printf("\n");
@@ -96,7 +97,7 @@ static void writeNodeRec(treeNode_t* node, FILE* file) {
     }
 }
 
-error_t saveAkinatorData(treeNode_t* root) {
+static error_t saveAkinatorData(treeNode_t* root) {
     FILE* file = fopen(AKINATOR_FILE_PATH, "w");
     if (file == NULL) {
         RETURN_ERR(NULL_PTR, "unable to open file");
@@ -114,7 +115,7 @@ error_t runAkinator() {
     SAFE_CALL(initTree(&root));
 
     treeNode_t* cur = root;
-    char inp[50] = {};
+    char inp[MAX_INPUT_SIZE] = {};
     while (getRight(cur) != NULL) {
         printf("your character %s?\n", getData(cur));
         readUserAnswer(inp);
