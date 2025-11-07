@@ -16,52 +16,43 @@ static void getNextNode(treeNode_t** cur, char inp[50]) {
 }
 
 static void readUserAnswer(char inp[50]) {
-    char endChar = 0;
-    scanf("%[^\n]%c", inp, &endChar);
+    char lastChar = 0;
+    scanf("%[^\n]%c", inp, &lastChar);
+}
+
+error_t readNode(treeNode_t** cur, FILE* file) {
+    char firstCh = 0;
+    if (fscanf(file, "%c", &firstCh) != 1) {
+        RETURN_ERR(INVALID_INPUT, "UNABLE TO PARSE akinator file");
+    }
+
+    if (firstCh == '(') {
+        char inp[50] = {};
+        fscanf(file, "\"%[^\"]\"", inp);
+        SAFE_CALL(createNode(inp, cur));
+        readNode(&(*cur)->left, file);
+        readNode(&(*cur)->right, file);
+        fscanf(file, "%c", &firstCh);
+    }
+    else if (firstCh == '&') {
+        *cur = NULL;
+    }
+    else {
+        RETURN_ERR(INVALID_INPUT, "invalid symbol in akinator file");
+    }
+
+    return SUCCESS;
 }
 
 error_t initTree(treeNode_t** root) {
-    treeNode* physteh = {};
-    SAFE_CALL(createNode("MIPT student", &physteh));
-    *root = physteh;
+    FILE* file = fopen(AKINATOR_FILE_PATH, "r");
+    if (file == NULL) {
+        RETURN_ERR(NULL_PTR, "unable to open file");
+    }
+    readNode(root, file);
+    fclose(file);
 
-    treeNode_t* cryptoScam = {};
-    SAFE_CALL(createNode("crypto scammer", &cryptoScam));
-
-    treeNode_t* baggage = {};
-    SAFE_CALL(createNode("got a ride in a car trunk", &baggage));
-
-    treeNode_t* notAGoodTeacher = {};
-    SAFE_CALL(createNode("govorit idi gugli", &notAGoodTeacher));
-
-    setRight(physteh, cryptoScam);
-    setLeft(physteh, notAGoodTeacher);
-    setRight(cryptoScam, baggage);
-
-
-    treeNode_t* tate = {};
-    SAFE_CALL(createNode("Andrew Tate", &tate));
-
-    treeNode_t* arsen = {};
-    SAFE_CALL(createNode("Arsen Markaryan", &arsen));
-
-    treeNode_t* samSulek = {};
-    SAFE_CALL(createNode("Sam Sulek", &samSulek));
-
-    treeNode_t* sanya = {};
-    SAFE_CALL(createNode("Aleksandr Dashchinski", &sanya));
-
-    treeNode_t* BossBoriss = {};
-    SAFE_CALL(createNode("BossBoriss", &BossBoriss));
-
-
-    setLeft(cryptoScam, tate);
-    setLeft(baggage, arsen);
-    setRight(baggage, samSulek);
-    setLeft(notAGoodTeacher, sanya);
-    setRight(notAGoodTeacher, BossBoriss);
-
-    TREE_DUMP(physteh, "akinator main dump", SUCCESS);
+    TREE_DUMP(*root, "akinator main dump", SUCCESS);
 
     return SUCCESS;
 }
@@ -95,7 +86,7 @@ error_t addNewCharacter(treeNode_t *root, treeNode_t *cur, char inp[50]) {
 
 static void writeNodeRec(treeNode_t* node, FILE* file) {
     if (node == NULL) {
-        fprintf(file, "nil");
+        fprintf(file, "&");
     }
     else {
         fprintf(file, "(\"%s\"", getData(node));
