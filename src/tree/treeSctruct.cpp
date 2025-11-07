@@ -4,7 +4,7 @@
 #include <cstdio>
 
 #include "common.h"
-#include "dump/treeDump.h"
+#include "treeDump.h"
 
 treeNode_t* getRight(treeNode_t* node) {
     assert(node);
@@ -33,7 +33,10 @@ treeElType getData(treeNode_t* node) {
 
 void setData(treeNode_t* node, treeElType data) {
     assert(node);
-    node->data = data;
+    assert(data);
+
+    node->data = (char*) calloc(strlen(data), sizeof(char));
+    strcpy(node->data, data);
 }
 
 error_t printTree(treeNode_t *root) {
@@ -130,7 +133,7 @@ static void destroyNode(treeNode_t* node) {
     if (node != NULL) {
         destroyNode(getLeft(node));
         destroyNode(getRight(node));
-        free(getData(node));
+        free(node->data);
         free(node);
     }
 }
