@@ -10,9 +10,9 @@ typedef struct treeNode {
     treeNode* right;
 } treeNode_t;
 
-error_t createNode(treeElType_t data, treeNode_t** result);
+int createNode(treeElType_t data, treeNode_t** result);
 
-error_t treeAdd(treeNode_t* root, treeElType_t val);
+int treeAdd(treeNode_t* root, treeElType_t val);
 treeNode_t* getRight(treeNode_t* node);
 void setRight(treeNode_t* node, treeNode_t* right);
 
@@ -22,8 +22,8 @@ void setLeft(treeNode_t* node, treeNode_t* left);
 treeElType_t getData(treeNode_t* node);
 void setData(treeNode_t* node, treeElType_t data);
 
-error_t validateTree(treeNode_t* root);
-error_t printTree(treeNode_t *root);
+int validateTree(treeNode_t* root);
+int printTree(treeNode_t *root);
 void destroyTree(treeNode_t* root);
 
 

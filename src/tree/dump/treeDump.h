@@ -3,16 +3,38 @@
 #include "common.h"
 #include "treeSctruct.h"
 
+const char* const TREE_POINTER_COLORS[] = {
+    "red",
+    "blue",
+    "purple",
+    "brown",
+    "darkcyan",
+    "white",
+    "black",
+    "yellow",
+    "darkred",
+    "navy",
+    "magenta",
+    "orange",
+    "darkviolet",
+    "gold",
+    "crimson",
+    "indigo",
+    "maroon",
+    "teal",
+    "deeppink",
+    "darkorange"
+};
 
-error_t treeDump(treeNode_t* node, const char* desc, const char* file, const int line, const char* func, error_t code);
+int treeDump(treeNode_t* node, const char* desc, const char* file, const int line, const char* func, int code);
 
 #ifdef DEBUG_TREE
     #define TREE_DUMP(node, desc, error_code) \
         treeDump(node, desc, __FILE__, __LINE__, __func__, error_code)
     #define TREE_VALID(node) \
         BEGIN \
-            error_t valid ## __LINE__ = validateTree(node); \
-            if (valid ## __LINE__ != SUCCESS) { \
+            int valid ## __LINE__ = validateTree(node); \
+            if (valid ## __LINE__ != AK_SUCCESS) { \
             TREE_DUMP(node, "ERROR", valid ## __LINE__); \
             PRINTERR("ERROR [%s:%d] (code %d)\n", __FILE__, __LINE__, valid ## __LINE__); \
             return valid ## __LINE__;\

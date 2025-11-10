@@ -1,18 +1,17 @@
 #include "treeDump.h"
 
-const char* colors[] = {
-    "red", "blue", "purple", "brown", "darkcyan"
-};
+
 
 const char* getPointerColor(void* ptr) {
-    size_t color_index = (size_t)ptr % (sizeof(colors) / sizeof(colors[0]));
-    return colors[color_index];
+    size_t color_count = sizeof(TREE_POINTER_COLORS) / sizeof(TREE_POINTER_COLORS[0]);
+    size_t color_index = (size_t)ptr % color_count;
+    return TREE_POINTER_COLORS[color_index];
 }
 
 static void addNodeInfo(FILE* file, int index, treeNode_t* node) {
     fprintf(file, "Node_%d [shape=Mrecord; style=filled; fillcolor = \"#56db70\"; "
                   "color = \"black\"; "
-                  "label = <{ptr: <font color=\"%s\">%p</font> | %s | ",
+                  "label = <{ptr: <font color=\"%s\">%p</font> | val: %s | ",
             index, getPointerColor(node), node, getData(node));
 
     if (getLeft(node) != NULL) {
@@ -59,7 +58,7 @@ static void generateDotFile(treeNode_t* node, FILE *dotFile) {
 }
 
 static void fillHtmlHeader(const char *desc, const char *fileName, const int line,
-                           const char *func, error_t code, FILE* htmlFile, size_t counter) {
+                           const char *func, int code, FILE* htmlFile, size_t counter) {
     assert(htmlFile);
     // заголовок
     fprintf(htmlFile, "</p><h3>DUMP#%llu <font color=red>%s</font> %s "
@@ -67,25 +66,26 @@ static void fillHtmlHeader(const char *desc, const char *fileName, const int lin
             counter, desc, func, fileName, line, code);
 }
 
-error_t treeDump(treeNode_t* node, const char* desc, const char* file,
-                 const int line, const char* func, error_t code) {
+int treeDump(treeNode_t* node, const char* desc, const char* file,
+                 const int line, const char* func, int code) {
     static size_t counter = 0;
 
-    static FILE* html_file = fopen(HTML_FILE_PATH, "w");
+    FILE* htmlFile = NULL;
+    htmlFile = fopen(HTML_FILE_PATH, counter == 0 ? "w" : "wa");
 
-    if (!html_file) {
-        RETURN_ERR(CANT_OPEN_FILE, "Cannot open HTML log file");
+    if (!htmlFile) {
+        RETURN_ERR(AK_CANT_OPEN_FILE, "Cannot open HTML log file");
     }
 
     char svg_filename[256] = {};
     snprintf(svg_filename, sizeof(svg_filename), SVG_FORMAT, counter);
-    fillHtmlHeader(desc, file, line, func, code, html_file, counter);
+    fillHtmlHeader(desc, file, line, func, code, htmlFile, counter);
 
     // DOT файл
     FILE* dot_file = fopen(DOT_FILE_PATH, "w");
     if (!dot_file) {
-        fclose(html_file);
-        RETURN_ERR(CANT_OPEN_FILE, "cannot create DOT file");
+        fclose(htmlFile);
+        RETURN_ERR(AK_CANT_OPEN_FILE, "cannot create DOT file");
     }
     generateDotFile(node, dot_file);
     fclose(dot_file);
@@ -97,17 +97,18 @@ error_t treeDump(treeNode_t* node, const char* desc, const char* file,
     int result = system(command);
 
     if (result != 0) {
-        fprintf(html_file, "<p style=\"color: red;\">Graphviz generation failed!</p>\n");
+        fprintf(htmlFile, "<p style=\"color: red;\">Graphviz generation failed!</p>\n");
     } else {
-        fprintf(html_file, "<img src=\"images/tree_%zu.svg\" "
+        fprintf(htmlFile, "<img src=\"images/tree_%zu.svg\" "
                            "alt=\"List structure visualization\">\n",
                 counter);
     }
 
-    fprintf(html_file, "<hr>\n");
+    fprintf(htmlFile, "<hr>\n");
 
     counter++;
-    fflush(html_file);
+    fflush(htmlFile);
+    fclose(htmlFile);
 
-    return SUCCESS;
+    return AK_SUCCESS;
 }

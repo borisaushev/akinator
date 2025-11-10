@@ -16,19 +16,19 @@ static void getNextNode(treeNode_t** cur, char inp[MAX_INPUT_SIZE]) {
 }
 
 static void readUserAnswer(char inp[MAX_INPUT_SIZE]) {
-    char lastChar = 0;
-    scanf("%[^\n]%c", inp, &lastChar);
+    scanf("%[^\n]", inp);
+    getchar();
 }
 
-static error_t readNode(treeNode_t** cur, FILE* file) {
+static int readNode(treeNode_t** cur, FILE* file) {
     char firstCh = 0;
     if (fscanf(file, "%c", &firstCh) != 1) {
-        RETURN_ERR(INVALID_INPUT, "UNABLE TO PARSE akinator file");
+        RETURN_ERR(AK_INVALID_INPUT, "UNABLE TO PARSE akinator file");
     }
 
     if (firstCh == '(') {
         char inp[MAX_INPUT_SIZE] = {};
-        fscanf(file, "\"%[^\"]\"", inp);
+        fscanf(file, "\"%[^\"]\"", inp); // scanning text from format: "desired content"
         SAFE_CALL(createNode(inp, cur));
         readNode(&(*cur)->left, file);
         readNode(&(*cur)->right, file);
@@ -38,27 +38,27 @@ static error_t readNode(treeNode_t** cur, FILE* file) {
         *cur = NULL;
     }
     else {
-        RETURN_ERR(INVALID_INPUT, "invalid symbol in akinator file");
+        RETURN_ERR(AK_INVALID_INPUT, "invalid symbol in akinator file");
     }
 
-    return SUCCESS;
+    return AK_SUCCESS;
 }
 
-static error_t initTree(treeNode_t** root) {
+static int initTree(treeNode_t** root) {
     FILE* file = fopen(AKINATOR_FILE_PATH, "r");
     if (file == NULL) {
-        RETURN_ERR(NULL_PTR, "unable to open file");
+        RETURN_ERR(AK_NULL_PTR, "unable to open file");
     }
     readNode(root, file);
     fclose(file);
 
-    TREE_DUMP(*root, "akinator main dump", SUCCESS);
+    TREE_DUMP(*root, "parsed tree dump", AK_SUCCESS);
 
-    return SUCCESS;
+    return AK_SUCCESS;
 }
 
-static error_t addNewCharacter(treeNode_t *root, treeNode_t *cur, char inp[MAX_INPUT_SIZE]) {
-    TREE_DUMP(root, "BEFORE ADD NEW CHARACTER", SUCCESS);
+static int addNewCharacter(treeNode_t *root, treeNode_t *cur, char inp[MAX_INPUT_SIZE]) {
+    TREE_DUMP(root, "BEFORE ADD NEW CHARACTER", AK_SUCCESS);
 
     printf("Who was your character?\n");
 
@@ -80,9 +80,9 @@ static error_t addNewCharacter(treeNode_t *root, treeNode_t *cur, char inp[MAX_I
     setRight(cur, prevCharacterNode);
 
     TREE_VALID(root);
-    TREE_DUMP(root, "AFTER ADD NEW CHARACTER", SUCCESS);
+    TREE_DUMP(root, "AFTER ADD NEW CHARACTER", AK_SUCCESS);
 
-    return SUCCESS;
+    return AK_SUCCESS;
 }
 
 static void writeNodeRec(treeNode_t* node, FILE* file) {
@@ -97,23 +97,20 @@ static void writeNodeRec(treeNode_t* node, FILE* file) {
     }
 }
 
-static error_t saveAkinatorData(treeNode_t* root) {
+static int saveAkinatorData(treeNode_t* root) {
     FILE* file = fopen(AKINATOR_FILE_PATH, "w");
     if (file == NULL) {
-        RETURN_ERR(NULL_PTR, "unable to open file");
+        RETURN_ERR(AK_NULL_PTR, "unable to open file");
     }
 
     writeNodeRec(root, file);
 
     fclose(file);
 
-    return SUCCESS;
+    return AK_SUCCESS;
 }
 
-error_t runAkinator() {
-    treeNode_t* root = {};
-    SAFE_CALL(initTree(&root));
-
+static int guessCharacter(treeNode_t *root) {
     treeNode_t* cur = root;
     char inp[MAX_INPUT_SIZE] = {};
     while (getRight(cur) != NULL) {
@@ -136,7 +133,66 @@ error_t runAkinator() {
     }
 
     SAFE_CALL(saveAkinatorData(root));
-    destroyTree(root);
+    return AK_SUCCESS;
+}
 
-    return SUCCESS;
+static int describeRec(treeNode_t* node, const char* character) {
+    if (node == NULL) {
+        return 0;
+    }
+
+    if (strcmp(character, getData(node)) == 0) {
+        printf("%s is:\n", character);
+        return 1;
+    }
+
+    if (describeRec(getLeft(node), character) == 1) {
+        printf("    %s\n", getData(node));
+        return 1;
+    }
+    if (describeRec(getRight(node), character) == 1) {
+        printf("    NOT %s\n", getData(node));
+        return 1;
+    }
+
+    return 0;
+}
+
+void describeCharacter(treeNode_t *root, char inp[100]) {
+    printf("Which character do you want me to describe?\n");
+    readUserAnswer(inp);
+    if (describeRec(root, inp) == 0) {
+        printf(" - character was not found =(\n");
+    }
+}
+
+int runAkinator() {
+    treeNode_t* root = {};
+    BB_TRY {
+        BB_CHECKED(initTree(&root));
+        printf("options: 'guess' - play akinator guess game, "
+                              "'describe' - give a definition of a character\n");
+        char inp[MAX_INPUT_SIZE] = {};
+        for (readUserAnswer(inp); strcmp(inp, "exit") != 0 ; readUserAnswer(inp)) {
+            if (strcmp(inp, "guess") == 0) {
+                BB_CHECKED(guessCharacter(root));
+            }
+            else if (strcmp(inp, "describe") == 0) {
+                describeCharacter(root, inp);
+            }
+            else {
+                printf("invalid command\n");
+            }
+            printf("\nwhat are they gonna do now?\n");
+        }
+    } BB_ENDTRY
+    BB_CATCH {
+    } BB_ENDCATCH
+    BB_FINALLY {
+        destroyTree(root);
+    }
+
+    printf("cause its boiled\n");
+
+    return AK_SUCCESS;
 }

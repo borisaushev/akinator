@@ -10,25 +10,23 @@
 #include <filesystem>
 
 
-typedef enum errors {
-    SUCCESS = 0,
-    NULL_PTR,
-    INVALID_CAPACITY,
-    INVALID_INDEX,
-    INVALID_PTR,
-    CONTENTS_MODIFIED,
-    CANT_OPEN_FILE,
-    FILE_NOT_FOUND,
-    FILE_NOT_READABLE,
-    INVALID_INPUT
-} error_t;
+typedef enum akinator_error {
+    AK_SUCCESS = 0,
+    AK_NULL_PTR,
+    AK_INVALID_CAPACITY,
+    AK_INVALID_INDEX,
+    AK_INVALID_PTR,
+    AK_FILE_NOT_FOUND,
+    AK_INVALID_INPUT,
+    AK_CANT_OPEN_FILE
+} akinator_error_t;
 
 
 const char* const HTML_FILE_PATH = "..\\files\\logs\\tree\\tree_dump.html";
 const char* const DOT_FILE_PATH = "..\\files\\logs\\tree\\images\\tree.dot";
 const char* const SVG_FORMAT = "..\\files\\logs\\tree\\images\\tree_%zu.svg";
 
-const int MAX_REASONABLE_SIZE = 10000;
+const int MAX_TREE_DEPTH = 10000;
 
 #define BEGIN do {
 #define END   } while (0)
@@ -62,10 +60,24 @@ const int MAX_REASONABLE_SIZE = 10000;
 
 #define SAFE_CALL(func) \
     BEGIN \
-        error_t sf_call ## __LINE__ = (func); \
-        if (sf_call ## __LINE__ != SUCCESS) { \
+        int sf_call ## __LINE__ = (func); \
+        if (sf_call ## __LINE__ != 0) { \
             return sf_call ## __LINE__; \
         } \
+    END
+
+#define      BB_TRY                  int __tx_error = 0; { goto __tx_try; } __tx_try: {
+#define      BB_CHECKED( cmd )       { if ((__tx_error = (cmd)) != 0) {goto __tx_catch;}}
+#define      BB_CATCH                goto __tx_finally; __tx_catch: {
+#define      BB_ENDCATCH             return __tx_error;}
+#define      BB_FAIL( error_code )   { __tx_error = error_code; goto __tx_catch; }
+#define      BB_FINALLY              __tx_finally:
+#define      BB_ENDTRY               }
+
+#define FAIL_ERR(code, desc) \
+    BEGIN \
+        PRINTERR("ERROR [%s:%d]: %s (code %d)\n", __FILE__, __LINE__, desc, code); \
+        BB_FAIL(code); \
     END
 
 #endif //TREE_COMMON_H
