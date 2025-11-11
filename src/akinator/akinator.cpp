@@ -21,20 +21,23 @@ static void readUserAnswer(char inp[MAX_INPUT_SIZE]) {
 }
 
 static int readNode(treeNode_t** cur, FILE* file) {
-    char firstCh = 0;
-    if (fscanf(file, "%c", &firstCh) != 1) {
+    char firstChar = 0;
+    if (fscanf(file, "%c", &firstChar) != 1) {
         RETURN_ERR(AK_INVALID_INPUT, "UNABLE TO PARSE akinator file");
     }
 
-    if (firstCh == '(') {
+    if (firstChar == '(') {
         char inp[MAX_INPUT_SIZE] = {};
         fscanf(file, "\"%[^\"]\"", inp); // scanning text from format: "desired content"
         SAFE_CALL(createNode(inp, cur));
-        readNode(&(*cur)->left, file);
-        readNode(&(*cur)->right, file);
-        fscanf(file, "%c", &firstCh);
+        SAFE_CALL(readNode(&(*cur)->left, file));
+        SAFE_CALL(readNode(&(*cur)->right, file));
+        fscanf(file, "%c", &firstChar);
+        if (firstChar != ')') {
+            RETURN_ERR(AK_INVALID_INPUT, "invalid character in akinator file");
+        }
     }
-    else if (firstCh == '&') {
+    else if (firstChar == '&') {
         *cur = NULL;
     }
     else {
@@ -57,7 +60,7 @@ static int initTree(treeNode_t** root) {
     return AK_SUCCESS;
 }
 
-static int addNewCharacter(treeNode_t *root, treeNode_t *cur, char inp[MAX_INPUT_SIZE]) {
+static int addNewCharacter(treeNode_t* root, treeNode_t* cur, char inp[MAX_INPUT_SIZE]) {
     TREE_DUMP(root, "BEFORE ADD NEW CHARACTER", AK_SUCCESS);
 
     printf("Who was your character?\n");
@@ -102,15 +105,13 @@ static int saveAkinatorData(treeNode_t* root) {
     if (file == NULL) {
         RETURN_ERR(AK_NULL_PTR, "unable to open file");
     }
-
     writeNodeRec(root, file);
 
     fclose(file);
-
     return AK_SUCCESS;
 }
 
-static int guessCharacter(treeNode_t *root) {
+static int guessCharacter(treeNode_t* root) {
     treeNode_t* cur = root;
     char inp[MAX_INPUT_SIZE] = {};
     while (getRight(cur) != NULL) {
@@ -136,6 +137,14 @@ static int guessCharacter(treeNode_t *root) {
     return AK_SUCCESS;
 }
 
+/**
+ *
+ * @param node current node
+ * @param character the character string
+ * @return:
+ * - 1 if the node is related to the character (is itself a character, or one of the children is related to the character)
+ * - 0 otherwise
+ */
 static int describeRec(treeNode_t* node, const char* character) {
     if (node == NULL) {
         return 0;
@@ -158,7 +167,7 @@ static int describeRec(treeNode_t* node, const char* character) {
     return 0;
 }
 
-void describeCharacter(treeNode_t *root, char inp[100]) {
+void describeCharacter(treeNode_t* root, char inp[MAX_INPUT_SIZE]) {
     printf("Which character do you want me to describe?\n");
     readUserAnswer(inp);
     if (describeRec(root, inp) == 0) {
