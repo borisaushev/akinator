@@ -21,6 +21,12 @@ static long get_file_size(const char* filename) {
     }
 }
 
+static void skipSpaces(char** curPos) {
+    while (isspace(**curPos)) {
+        (*curPos)++;
+    }
+}
+
 static int read_file(const char *file_path, char** text, int* bytes_read) {
     int stream = open(file_path, 0);
 
@@ -48,6 +54,8 @@ static int read_file(const char *file_path, char** text, int* bytes_read) {
     return 0;
 }
 
+//TODO вывести это говно в дамп
+//TODO разделить на файлы
 
 static void getNextNode(treeNode_t** cur, char inp[MAX_LINE_LENGTH]) {
     if (strcmp(inp, "yes") == 0) {
@@ -70,8 +78,9 @@ static int parseNode(char** curPos, treeNode_t** cur) {
     DPRINTF("Parsing node with input: %s\n", *curPos);
     if (**curPos == '(') {
         DPRINTF("Read '(' \n");
-
+        skipSpaces(curPos);
         (*curPos)++;
+        skipSpaces(curPos);
         DPRINTF("skipped '(', remaining string: %s\n", *curPos);
         if (**curPos != '"') {
             DPRINTF("expected '\"'\n");
@@ -84,11 +93,6 @@ static int parseNode(char** curPos, treeNode_t** cur) {
             RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
         }
 
-        // char data[MAX_LINE_LENGTH] = {};
-        // strncpy(data, *curPos + 1, dataLength);
-        // DPRINTF("Read input text: %s with length: %llu\n", data, dataLength);
-        //
-        // createNode(data, cur);
         *end = '\0';
         createNode(*curPos + 1, false, cur);
         DPRINTF("Created new node\n");
@@ -96,6 +100,7 @@ static int parseNode(char** curPos, treeNode_t** cur) {
 
         *curPos = end + 1;
 
+        skipSpaces(curPos);
         DPRINTF("skipped data, remaining str: %s\n", *curPos);
 
         DPRINTF("Parsing left subtree\n");
@@ -109,8 +114,12 @@ static int parseNode(char** curPos, treeNode_t** cur) {
         DPRINTF("Parsed right subtree\n");
         TREE_DUMP(*cur, "Parsed right subtree", AK_SUCCESS);
 
+        skipSpaces(curPos);
+        if (**curPos != ')') {
+            RETURN_ERR(AK_INVALID_INPUT, "expected ')'");
+        }
         (*curPos)++;
-
+        skipSpaces(curPos);
         DPRINTF("skipped ')', remaining str: %s\n", *curPos);
 
         return AK_SUCCESS;
