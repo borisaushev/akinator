@@ -31,12 +31,18 @@ treeElType_t getData(treeNode_t* node) {
     return node->data;
 }
 
-void setData(treeNode_t* node, treeElType_t data) {
+void setDataCopy(treeNode_t* node, treeElType_t data) {
     assert(node);
     assert(data);
 
     node->data = (char*) calloc(strlen(data), sizeof(char));
     strcpy(node->data, data);
+}
+
+void setData(treeNode_t* node, treeElType_t data) {
+    assert(node);
+
+    node->data = data;
 }
 
 int printTree(treeNode_t *root) {
@@ -55,9 +61,10 @@ int printTree(treeNode_t *root) {
     return AK_SUCCESS;
 }
 
-int createNode(treeElType_t data, treeNode_t** result) {
+int createNode(treeElType_t data, bool shouldFree, treeNode_t** result) {
     assert(result);
     *result = (treeNode_t*)calloc(1, sizeof(treeNode_t));
+    (*result)->shouldFree = shouldFree;
 
     if (*result == NULL) {
         RETURN_ERR(AK_NULL_PTR, "unable to allocate memory for node");
@@ -66,8 +73,7 @@ int createNode(treeElType_t data, treeNode_t** result) {
     (*result)->left = NULL;
     (*result)->right = NULL;
 
-    (*result)->data = (char*) calloc(strlen(data), sizeof(char));
-    strcpy((*result)->data, data);
+    (*result)->data = data;
 
     return AK_SUCCESS;
 }
@@ -101,7 +107,7 @@ int validateTree(treeNode_t* root) {
 
 static int insertValue(treeNode_t** cur, treeElType_t val) {
     if (*cur == NULL) {
-        SAFE_CALL(createNode(val, cur));
+        SAFE_CALL(createNode(val, false, cur));
 
         return AK_SUCCESS;
     }
@@ -133,7 +139,9 @@ static void destroyNode(treeNode_t* node) {
     if (node != NULL) {
         destroyNode(getLeft(node));
         destroyNode(getRight(node));
-        free(node->data);
+        if (node->shouldFree) {
+            free(node->data);
+        }
         free(node);
     }
 }

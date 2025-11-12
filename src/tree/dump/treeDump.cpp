@@ -71,7 +71,7 @@ int treeDump(treeNode_t* node, const char* desc, const char* file,
     static size_t counter = 0;
 
     FILE* htmlFile = NULL;
-    htmlFile = fopen(HTML_FILE_PATH, counter == 0 ? "w" : "wa");
+    htmlFile = fopen(HTML_FILE_PATH, counter++ == 0 ? "w" : "a");
 
     if (!htmlFile) {
         RETURN_ERR(AK_CANT_OPEN_FILE, "Cannot open HTML log file");
@@ -106,8 +106,6 @@ int treeDump(treeNode_t* node, const char* desc, const char* file,
 
     fprintf(htmlFile, "<hr>\n");
 
-    counter++;
-    fflush(htmlFile);
     fclose(htmlFile);
 
     return AK_SUCCESS;
