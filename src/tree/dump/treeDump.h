@@ -27,6 +27,7 @@ const char* const TREE_POINTER_COLORS[] = {
 };
 
 int treeDump(treeNode_t* node, const char* desc, const char* file, const int line, const char* func, int code);
+int treeLog(const char* message, ...);
 
 #ifdef DEBUG_TREE
     #define TREE_DUMP(node, desc, error_code) \
@@ -34,7 +35,7 @@ int treeDump(treeNode_t* node, const char* desc, const char* file, const int lin
     #define TREE_VALID(node) \
         BEGIN \
             int valid ## __LINE__ = validateTree(node); \
-            if (valid ## __LINE__ != AK_SUCCESS) { \
+            if (valid ## __LINE__ != 0) { \
             TREE_DUMP(node, "ERROR", valid ## __LINE__); \
             PRINTERR("ERROR [%s:%d] (code %d)\n", __FILE__, __LINE__, valid ## __LINE__); \
             return valid ## __LINE__;\

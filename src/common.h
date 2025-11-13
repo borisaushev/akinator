@@ -10,16 +10,6 @@
 #include <filesystem>
 
 
-typedef enum akinator_error {
-    AK_SUCCESS = 0,
-    AK_NULL_PTR,
-    AK_INVALID_CAPACITY,
-    AK_INVALID_INDEX,
-    AK_INVALID_PTR,
-    AK_FILE_NOT_FOUND,
-    AK_INVALID_INPUT,
-    AK_CANT_OPEN_FILE
-} akinator_error_t;
 
 
 const char* const HTML_FILE_PATH = "..\\files\\logs\\tree\\tree_dump.html";

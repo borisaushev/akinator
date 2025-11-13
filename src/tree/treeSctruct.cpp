@@ -58,7 +58,7 @@ int printTree(treeNode_t *root) {
     }
     printf(")");
 
-    return AK_SUCCESS;
+    return TR_SUCCESS;
 }
 
 int createNode(treeElType_t data, bool shouldFree, treeNode_t** result) {
@@ -67,7 +67,7 @@ int createNode(treeElType_t data, bool shouldFree, treeNode_t** result) {
     (*result)->shouldFree = shouldFree;
 
     if (*result == NULL) {
-        RETURN_ERR(AK_NULL_PTR, "unable to allocate memory for node");
+        RETURN_ERR(TR_NULL_PTR, "unable to allocate memory for node");
     }
 
     (*result)->left = NULL;
@@ -75,7 +75,7 @@ int createNode(treeElType_t data, bool shouldFree, treeNode_t** result) {
 
     (*result)->data = data;
 
-    return AK_SUCCESS;
+    return TR_SUCCESS;
 }
 
 static void countTreeSize(treeNode_t* node, size_t* size) {
@@ -93,27 +93,27 @@ static void countTreeSize(treeNode_t* node, size_t* size) {
 
 int validateTree(treeNode_t* root) {
     if (root == NULL) {
-        RETURN_ERR(AK_NULL_PTR, "root is null");
+        RETURN_ERR(TR_NULL_PTR, "root is null");
     }
 
     size_t size = 0;
     countTreeSize(root, &size);
     if (size > MAX_TREE_DEPTH) {
-        RETURN_ERR(AK_INVALID_CAPACITY, "tree is cycled");
+        RETURN_ERR(TR_INVALID_SIZE, "tree is cycled");
     }
 
-    return AK_SUCCESS;
+    return TR_SUCCESS;
 }
 
 static int insertValue(treeNode_t** cur, treeElType_t val) {
     if (*cur == NULL) {
         SAFE_CALL(createNode(val, false, cur));
 
-        return AK_SUCCESS;
+        return TR_SUCCESS;
     }
 
     if (val == getData(*cur)) {
-        return AK_SUCCESS;
+        return TR_SUCCESS;
     }
     else if (val < getData(*cur)) {
         return insertValue(&(*cur)->left, val);
@@ -125,14 +125,14 @@ static int insertValue(treeNode_t** cur, treeElType_t val) {
 
 int treeAdd(treeNode_t* root, treeElType_t val) {
     TREE_VALID(root);
-    TREE_DUMP(root, "BEFORE ADD", AK_SUCCESS);
+    TREE_DUMP(root, "BEFORE ADD", TR_SUCCESS);
 
     insertValue(&root, val);
 
     TREE_VALID(root);
-    TREE_DUMP(root, "AFTER ADD", AK_SUCCESS);
+    TREE_DUMP(root, "AFTER ADD", TR_SUCCESS);
 
-    return AK_SUCCESS;
+    return TR_SUCCESS;
 }
 
 static void destroyNode(treeNode_t* node) {
@@ -150,14 +150,14 @@ int destroyLeftNode(treeNode* parentNode) {
     destroyNode(getLeft(parentNode));
     setLeft(parentNode, NULL);
 
-    return AK_SUCCESS;
+    return TR_SUCCESS;
 }
 
 int destroyRightNode(treeNode* parentNode) {
     destroyNode(getRight(parentNode));
     setRight(parentNode, NULL);
 
-    return AK_SUCCESS;
+    return TR_SUCCESS;
 }
 
 void destroyTree(treeNode_t* root) {

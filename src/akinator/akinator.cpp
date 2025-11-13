@@ -37,8 +37,8 @@ static int read_file(const char *file_path, char** text, int* bytes_read) {
         PRINTERR("Could not open file %s\n", file_path);
         RETURN_ERR(AK_FILE_NOT_FOUND, "Could not open file");
     }
-    *text = (char *) calloc(file_size, sizeof(char));
-    *bytes_read = read(stream, *text, file_size);
+    *text = (char *) calloc((size_t) file_size, sizeof(char));
+    *bytes_read = read(stream, *text, (unsigned int) file_size);
 
     if (*bytes_read == -1) {
         PRINTERR("Could not read file %s with err: %s\n", file_path, strerror(errno));
@@ -47,15 +47,15 @@ static int read_file(const char *file_path, char** text, int* bytes_read) {
     DPRINTF("Read %d bytes\n", *bytes_read);
     close(stream);
 
-    *text = (char *) realloc(*text,  *bytes_read + 2);
+    *text = (char *) realloc(*text,  (size_t) *bytes_read + 2);
     (*text)[*bytes_read] = (*text)[*bytes_read-1] == '\n' ? '\0' : '\n';
     (*text)[*bytes_read + 1] = '\0';
 
     return 0;
 }
 
-//TODO вывести это говно в дамп
 //TODO разделить на файлы
+//TODO сделать озвучку и приставки
 
 static void getNextNode(treeNode_t** cur, char inp[MAX_LINE_LENGTH]) {
     if (strcmp(inp, "yes") == 0) {
@@ -69,49 +69,46 @@ static void getNextNode(treeNode_t** cur, char inp[MAX_LINE_LENGTH]) {
     }
 }
 
-static void readUserAnswer(char inp[MAX_LINE_LENGTH]) {
-    scanf("%[^\n]", inp);
-    getchar();
-}
-
 static int parseNode(char** curPos, treeNode_t** cur) {
-    DPRINTF("Parsing node with input: %s\n", *curPos);
+    treeLog("Parsing node with input: </p>%s", *curPos);
     if (**curPos == '(') {
-        DPRINTF("Read '(' \n");
+        treeLog("Read '(' ");
         skipSpaces(curPos);
         (*curPos)++;
         skipSpaces(curPos);
-        DPRINTF("skipped '(', remaining string: %s\n", *curPos);
+        treeLog("skipped '('");
+        treeLog("remaining string: </p>%s", *curPos);
         if (**curPos != '"') {
-            DPRINTF("expected '\"'\n");
+            treeLog("expected '\"'");
             RETURN_ERR(AK_FILE_NOT_FOUND, "expected '\"'");
         }
 
         char* end = strchr(*curPos + 1, '"');
         if (end == NULL) {
-            DPRINTF("Havent found the end of the string\n");
+            treeLog("Havent found the end of the string");
             RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
         }
 
         *end = '\0';
         createNode(*curPos + 1, false, cur);
-        DPRINTF("Created new node\n");
-        TREE_DUMP(*cur, "Created node", AK_SUCCESS); //TODO
+        treeLog("Created new node");
+        TREE_DUMP(*cur, "Created node", AK_SUCCESS);
 
         *curPos = end + 1;
 
         skipSpaces(curPos);
-        DPRINTF("skipped data, remaining str: %s\n", *curPos);
+        treeLog("skipped data");
+        treeLog("remaining string: </p>%s", *curPos);
 
-        DPRINTF("Parsing left subtree\n");
+        treeLog("Parsing left subtree");
         SAFE_CALL(parseNode(curPos, &(*cur)->left));
-        DPRINTF("Parsed left subtree\n");
+        treeLog("Parsed left subtree");
         TREE_DUMP(*cur, "Parsed left subtree", AK_SUCCESS);
 
 
-        DPRINTF("Parsing right subtree\n");
+        treeLog("Parsing right subtree");
         SAFE_CALL(parseNode(curPos, &(*cur)->right));
-        DPRINTF("Parsed right subtree\n");
+        treeLog("Parsed right subtree");
         TREE_DUMP(*cur, "Parsed right subtree", AK_SUCCESS);
 
         skipSpaces(curPos);
@@ -120,15 +117,16 @@ static int parseNode(char** curPos, treeNode_t** cur) {
         }
         (*curPos)++;
         skipSpaces(curPos);
-        DPRINTF("skipped ')', remaining str: %s\n", *curPos);
+        treeLog("skipped ')'");
+        treeLog("remaining string: </p>%s", *curPos);
 
         return AK_SUCCESS;
     }
     else if (strncmp(*curPos, "nil", 3) == 0) {
-        DPRINTF("found nil node\n");
+        treeLog("found nil node");
         *curPos += 3;
 
-        DPRINTF("Skipped nil, remaining str: %s\n", *curPos);
+        treeLog("Skipped nil, remaining str: %s", *curPos);
         return AK_SUCCESS;
     }
     else {
@@ -152,6 +150,11 @@ static int initTree(akinatorInfo_t* akinatorInfo) {
     TREE_DUMP(akinatorInfo->root, "parsed tree dump", AK_SUCCESS);
 
     return AK_SUCCESS;
+}
+
+static void readUserAnswer(char inp[MAX_LINE_LENGTH]) {
+    scanf("%[^\n]", inp);
+    getchar();
 }
 
 static int addNewCharacter(treeNode_t* root, treeNode_t* cur, char inp[MAX_LINE_LENGTH]) {

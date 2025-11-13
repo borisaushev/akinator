@@ -11,6 +11,16 @@ typedef struct treeNode {
     bool shouldFree;
 } treeNode_t;
 
+typedef enum tree_error {
+    TR_SUCCESS = 0,
+    TR_NULL_PTR,
+    TR_INVALID_PTR,
+    TR_FILE_NOT_FOUND,
+    TR_INVALID_INPUT,
+    TR_INVALID_SIZE,
+    TR_CANT_OPEN_FILE
+} tree_error_t;
+
 int createNode(treeElType_t data, bool shouldFree, treeNode_t** result);
 
 int treeAdd(treeNode_t* root, treeElType_t val);
