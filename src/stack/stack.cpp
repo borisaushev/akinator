@@ -168,6 +168,10 @@ void initStack(stack_t* stack, size_t capacity) {
     DPRINTF("stack init with poison values and canarrays\n");
 }
 
+size_t getStackElementCount(stack_t* stack) {
+    return stack->elementCount;
+}
+
 int stackPop(stack_t* stack, element_t* element) {
     assert(stack);
     assert(element);

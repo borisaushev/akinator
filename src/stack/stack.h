@@ -5,9 +5,16 @@
 
 #include "common.h"
 
-typedef int element_t;
+typedef struct characterProperty {
+    const char* question;
+    bool answer;
+} characterProperty_t;
+
+typedef characterProperty_t element_t;
 # define REG "%d"
-const int POISON = -777777777;
+
+const int STACK_BASE_SIZE = 100;
+const element_t POISON = {"777", false};
 const char CANARRAY = 'W';
 
 typedef struct stack {
@@ -52,6 +59,8 @@ BEGIN \
 END
 
 void initStack(stack_t* stack, size_t capacity);
+
+size_t getStackElementCount(stack_t* stack);
 
 int stackPop(stack_t* stack, element_t* element);
 

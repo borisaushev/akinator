@@ -6,55 +6,14 @@
 
 #include <stdio.h>
 
+#include "stack.h"
+#include "akinatorInput.h"
+
 typedef struct akinatorInfo {
     treeNode* root;
     char* buffer;
 } akinatorInfo_t;
 
-static long get_file_size(const char* filename) {
-    struct stat st = {};
-    if (stat(filename, &st) == 0) {
-        return st.st_size;
-    }
-    else {
-        return -1;
-    }
-}
-
-static void skipSpaces(char** curPos) {
-    while (isspace(**curPos)) {
-        (*curPos)++;
-    }
-}
-
-static int read_file(const char *file_path, char** text, int* bytes_read) {
-    int stream = open(file_path, 0);
-
-    long file_size = get_file_size(file_path);
-    DPRINTF("file size: %lu\n", file_size);
-
-    if (file_size < 0) {
-        PRINTERR("Could not open file %s\n", file_path);
-        RETURN_ERR(AK_FILE_NOT_FOUND, "Could not open file");
-    }
-    *text = (char *) calloc((size_t) file_size, sizeof(char));
-    *bytes_read = read(stream, *text, (unsigned int) file_size);
-
-    if (*bytes_read == -1) {
-        PRINTERR("Could not read file %s with err: %s\n", file_path, strerror(errno));
-        RETURN_ERR(AK_FILE_NOT_FOUND, "Could not read file");
-    }
-    DPRINTF("Read %d bytes\n", *bytes_read);
-    close(stream);
-
-    *text = (char *) realloc(*text,  (size_t) *bytes_read + 2);
-    (*text)[*bytes_read] = (*text)[*bytes_read-1] == '\n' ? '\0' : '\n';
-    (*text)[*bytes_read + 1] = '\0';
-
-    return 0;
-}
-
-//TODO разделить на файлы
 //TODO сделать озвучку и приставки
 
 static void getNextNode(treeNode_t** cur, char inp[MAX_LINE_LENGTH]) {
@@ -66,71 +25,6 @@ static void getNextNode(treeNode_t** cur, char inp[MAX_LINE_LENGTH]) {
     }
     else {
         printf("normalno napishy\n");
-    }
-}
-
-static int parseNode(char** curPos, treeNode_t** cur) {
-    treeLog("Parsing node with input: </p>%s", *curPos);
-    if (**curPos == '(') {
-        treeLog("Read '(' ");
-        skipSpaces(curPos);
-        (*curPos)++;
-        skipSpaces(curPos);
-        treeLog("skipped '('");
-        treeLog("remaining string: </p>%s", *curPos);
-        if (**curPos != '"') {
-            treeLog("expected '\"'");
-            RETURN_ERR(AK_FILE_NOT_FOUND, "expected '\"'");
-        }
-
-        char* end = strchr(*curPos + 1, '"');
-        if (end == NULL) {
-            treeLog("Havent found the end of the string");
-            RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
-        }
-
-        *end = '\0';
-        createNode(*curPos + 1, false, cur);
-        treeLog("Created new node");
-        TREE_DUMP(*cur, "Created node", AK_SUCCESS);
-
-        *curPos = end + 1;
-
-        skipSpaces(curPos);
-        treeLog("skipped data");
-        treeLog("remaining string: </p>%s", *curPos);
-
-        treeLog("Parsing left subtree");
-        SAFE_CALL(parseNode(curPos, &(*cur)->left));
-        treeLog("Parsed left subtree");
-        TREE_DUMP(*cur, "Parsed left subtree", AK_SUCCESS);
-
-
-        treeLog("Parsing right subtree");
-        SAFE_CALL(parseNode(curPos, &(*cur)->right));
-        treeLog("Parsed right subtree");
-        TREE_DUMP(*cur, "Parsed right subtree", AK_SUCCESS);
-
-        skipSpaces(curPos);
-        if (**curPos != ')') {
-            RETURN_ERR(AK_INVALID_INPUT, "expected ')'");
-        }
-        (*curPos)++;
-        skipSpaces(curPos);
-        treeLog("skipped ')'");
-        treeLog("remaining string: </p>%s", *curPos);
-
-        return AK_SUCCESS;
-    }
-    else if (strncmp(*curPos, "nil", 3) == 0) {
-        treeLog("found nil node");
-        *curPos += 3;
-
-        treeLog("Skipped nil, remaining str: %s", *curPos);
-        return AK_SUCCESS;
-    }
-    else {
-        RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
     }
 }
 
@@ -152,10 +46,6 @@ static int initTree(akinatorInfo_t* akinatorInfo) {
     return AK_SUCCESS;
 }
 
-static void readUserAnswer(char inp[MAX_LINE_LENGTH]) {
-    scanf("%[^\n]", inp);
-    getchar();
-}
 
 static int addNewCharacter(treeNode_t* root, treeNode_t* cur, char inp[MAX_LINE_LENGTH]) {
     TREE_DUMP(root, "BEFORE ADD NEW CHARACTER", AK_SUCCESS);
@@ -184,29 +74,6 @@ static int addNewCharacter(treeNode_t* root, treeNode_t* cur, char inp[MAX_LINE_
     TREE_VALID(root);
     TREE_DUMP(root, "AFTER ADD NEW CHARACTER", AK_SUCCESS);
 
-    return AK_SUCCESS;
-}
-
-static void writeNodeRec(treeNode_t* node, FILE* file) {
-    if (node == NULL) {
-        fprintf(file, "nil");
-    }
-    else {
-        fprintf(file, "(\"%s\"", getData(node));
-        writeNodeRec(getLeft(node), file);
-        writeNodeRec(getRight(node), file);
-        fprintf(file, ")");
-    }
-}
-
-static int saveAkinatorData(treeNode_t* root) {
-    FILE* file = fopen(AKINATOR_FILE_PATH, "w");
-    if (file == NULL) {
-        RETURN_ERR(AK_NULL_PTR, "unable to open file");
-    }
-    writeNodeRec(root, file);
-
-    fclose(file);
     return AK_SUCCESS;
 }
 
@@ -241,37 +108,88 @@ static int guessCharacter(treeNode_t* root) {
  * @param node current node
  * @param character the character string
  * @return:
- * - 1 if the node is related to the character (is itself a character, or one of the children is related to the character)
- * - 0 otherwise
+ * - true if the node is related to the character (is itself a character, or one of the children is related to the character)
+ * - false otherwise
  */
-static int describeRec(treeNode_t* node, const char* character) {
+static bool describeRec(treeNode_t* node, const char* character, stack_t* propertyStack) {
     if (node == NULL) {
-        return 0;
+        return false;
     }
 
     if (strcmp(character, getData(node)) == 0) {
-        printf("%s is:\n", character);
-        return 1;
+        return true;
     }
 
-    if (describeRec(getLeft(node), character) == 1) {
-        printf("    %s\n", getData(node));
-        return 1;
+    if (describeRec(getLeft(node), character, propertyStack) == 1) {
+        stackPush(propertyStack, {getData(node), true});
+        return true;
     }
-    if (describeRec(getRight(node), character) == 1) {
-        printf("    NOT %s\n", getData(node));
-        return 1;
+    if (describeRec(getRight(node), character, propertyStack) == 1) {
+        stackPush(propertyStack, {getData(node), false});
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
-void describeCharacter(treeNode_t* root, char inp[MAX_LINE_LENGTH]) {
+void describeCharacter(treeNode_t* root) {
     printf("Which character do you want me to describe?\n");
-    readUserAnswer(inp);
-    if (describeRec(root, inp) == 0) {
+    char character[MAX_LINE_LENGTH];
+    readUserAnswer(character);
+
+    stack_t propertyStack = {};
+    initStack(&propertyStack, STACK_BASE_SIZE);
+
+    if (!describeRec(root, character, &propertyStack)) {
         printf(" - character was not found =(\n");
+        return;
     }
+
+    characterProperty property = {};
+    printf("your character is:\n");
+    while (getStackElementCount(&propertyStack) > 0) {
+        stackPop(&propertyStack, &property);
+        printf("\t");
+        if (!property.answer) {
+            printf("NOT ");
+        }
+        printf("%s\n", property.question);
+    }
+}
+
+void compareCharacters(treeNode_t* root) {
+    printf("Which character do you want me compare?\n");
+    char character1[MAX_LINE_LENGTH];
+    readUserAnswer(character1);
+
+    stack_t propertyStack1 = {};
+    initStack(&propertyStack1, STACK_BASE_SIZE);
+    if (!describeRec(root, character1, &propertyStack1)) {
+        printf(" - character was not found =(\n");
+        return;
+    }
+
+    printf("Which character do you want me to campare the first characted to?\n");
+    char character2[MAX_LINE_LENGTH];
+    readUserAnswer(character2);
+
+    stack_t propertyStack2 = {};
+    initStack(&propertyStack2, STACK_BASE_SIZE);
+    if (!describeRec(root, character2, &propertyStack2)) {
+        printf(" - character was not found =(\n");
+        return;
+    }
+
+    printf("%s and %s are both:\n", character1, character2);
+    characterProperty property1 = {};
+    characterProperty property2 = {};
+    while (getStackElementCount(&propertyStack1) > 0 && getStackElementCount(&propertyStack2) > 0) {
+        stackPop(&propertyStack1, &property1);
+        stackPop(&propertyStack2, &property2);
+        if (property1.answer) {}
+    }
+
+    //TODO
 }
 
 int runAkinator() {
@@ -288,7 +206,7 @@ int runAkinator() {
                 BB_CHECKED(guessCharacter(akinatorInfo.root));
             }
             else if (strcmp(inp, "describe") == 0) {
-                describeCharacter(akinatorInfo.root, inp);
+                describeCharacter(akinatorInfo.root);
             }
             else {
                 printf("invalid command\n");

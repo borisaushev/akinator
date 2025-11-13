@@ -10,8 +10,6 @@
 #include <filesystem>
 
 
-
-
 const char* const HTML_FILE_PATH = "..\\files\\logs\\tree\\tree_dump.html";
 const char* const DOT_FILE_PATH = "..\\files\\logs\\tree\\images\\tree.dot";
 const char* const SVG_FORMAT = "..\\files\\logs\\tree\\images\\tree_%zu.svg";
