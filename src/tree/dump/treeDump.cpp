@@ -61,34 +61,33 @@ static void generateDotFile(treeNode_t* node, FILE *dotFile) {
 static void fillHtmlHeader(const char *desc, const char *fileName, const int line,
                            const char *func, int code, FILE* htmlFile, size_t counter) {
     assert(htmlFile);
-    // заголовок
     fprintf(htmlFile, "\n\n</p><h3>DUMP#%llu <font color=red>\n\t%s\n</font> \n\t%s "
                       "at (%s:%d) - \n\tSTATUS: %d\n</h3></p>\n",
             counter, desc, func, fileName, line, code);
 }
 
 int treeLog(const char* message, ...) {
-#ifdef DEBUG_TREE
-    FILE* htmlFile = fopen(HTML_FILE_PATH, "a");
-    if (!htmlFile) {
-        RETURN_ERR(TR_CANT_OPEN_FILE, "Cannot open HTML log file");
-    }
+    #ifdef DEBUG_TREE
+        FILE* htmlFile = fopen(HTML_FILE_PATH, "a");
+        if (!htmlFile) {
+            RETURN_ERR(TR_CANT_OPEN_FILE, "Cannot open HTML log file");
+        }
 
-    // Стиль для всего сообщения
-    fprintf(htmlFile, "\n<div style='font-size: 18px; line-height: 1.6; margin: 12px 0; padding: 12px; background: #f8f9fa; border-left: 5px solid #28a745; border-radius: 4px; font-family: \"Courier New\", monospace; font-weight: bold;'>\n\t");
-    va_list args;
-    va_start(args, message);
-    vfprintf(htmlFile, message, args);
-    va_end(args);
+        // Стиль для всего сообщения
+        fprintf(htmlFile, "\n<div style='font-size: 18px; line-height: 1.6; margin: 12px 0; padding: 12px; background: #f8f9fa; border-left: 5px solid #28a745; border-radius: 4px; font-family: \"Courier New\", monospace; font-weight: bold;'>\n\t");
+        va_list args;
+        va_start(args, message);
+        vfprintf(htmlFile, message, args);
+        va_end(args);
 
-    fprintf(htmlFile, "\n</div>\n");
-    fclose(htmlFile);
-#endif
+        fprintf(htmlFile, "</div>\n");
+        fclose(htmlFile);
+    #endif
     return TR_SUCCESS;
 }
 
 int treeDump(treeNode_t* node, const char* desc, const char* file,
-                 const int line, const char* func, int code) {
+             const int   line, const char* func, int code) {
     static size_t counter = 0;
 
     FILE* htmlFile = fopen(HTML_FILE_PATH, counter++ == 0 ? "w" : "a");

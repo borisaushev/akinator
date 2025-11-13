@@ -1,4 +1,5 @@
-#include "akinator/akinator.h"
+#include "akinator.h"
+
 int main() {
     return runAkinator();
 }
