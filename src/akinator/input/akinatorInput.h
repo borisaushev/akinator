@@ -3,6 +3,7 @@
 #include "akinator.h"
 #include "treeSctruct.h"
 
+const char* const NULL_NODE_STRING = "nil";
 
 long get_file_size(const char* filename);
 

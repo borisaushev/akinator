@@ -10,9 +10,8 @@ long get_file_size(const char* filename) {
     if (stat(filename, &st) == 0) {
         return st.st_size;
     }
-    else {
-        return -1;
-    }
+
+    return -1;
 }
 
 void skipSpaces(char** curPos) {
@@ -103,15 +102,17 @@ int parseNode(char** curPos, treeNode_t** cur) {
 
         return AK_SUCCESS;
     }
-    else if (strncmp(*curPos, "nil", 3) == 0) {
-        treeLog("found nil node");
-        *curPos += 3;
-
-        treeLog("Skipped nil, remaining str: %s", *curPos);
-        return AK_SUCCESS;
-    }
     else {
-        RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
+        if (strncmp(*curPos, NULL_NODE_STRING, 3) == 0) {
+            treeLog("found nil node");
+            *curPos += strlen(NULL_NODE_STRING);
+
+            treeLog("Skipped nil, remaining str: %s", *curPos);
+            return AK_SUCCESS;
+        }
+        else {
+            RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
+        }
     }
 }
 
