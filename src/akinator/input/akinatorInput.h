@@ -11,7 +11,7 @@ void skipSpaces(char** curPos);
 
 int readFile(const char *file_path, char** text, int* bytes_read);
 
-int parseNode(char** curPos, treeNode_t** cur);
+int parseNode(char** curPos, treeNode_t** cur, const char* buffer);
 
 void readUserAnswer(char inp[MAX_LINE_LENGTH]);
 

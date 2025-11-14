@@ -49,15 +49,30 @@ int readFile(const char *file_path, char** text, int* bytes_read) {
 }
 
 
-int parseNode(char** curPos, treeNode_t** cur) {
-    treeLog("Parsing node with input: </p>%s", *curPos);
+void dumpBuffer(char **curPos, const char *buffer) {
+    char dumpString[MAX_LINE_LENGTH] = {};
+    strcat(dumpString, "buffer:</p><font color=\"#00bfff\">");
+    strncat(dumpString, buffer,  strlen(buffer) - strlen(*curPos));
+    strcat(dumpString, "</font>");
+
+    strcat(dumpString, "<font color=\"#0e2466\">");
+    strcat(dumpString, *curPos);
+    strcat(dumpString, "</font>");
+
+    treeLog(dumpString);
+}
+
+int parseNode(char** curPos, treeNode_t** cur, const char* buffer) {
+    treeLog("Parsing node");
+    dumpBuffer(curPos, buffer);
+
     if (**curPos == '(') {
         treeLog("Read '(' ");
         skipSpaces(curPos);
         (*curPos)++;
 
         treeLog("skipped '('");
-        treeLog("remaining string: </p>%s", *curPos);
+        dumpBuffer(curPos, buffer);
 
         skipSpaces(curPos);
         if (**curPos != '"') {
@@ -71,25 +86,27 @@ int parseNode(char** curPos, treeNode_t** cur) {
             RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
         }
 
+        char chBuf = *end;
         *end = '\0';
         createNode(*curPos + 1, false, cur);
         treeLog("Created new node");
         TREE_DUMP(*cur, "Created node", AK_SUCCESS);
 
+
         *curPos = end + 1;
 
         skipSpaces(curPos);
         treeLog("skipped data");
-        treeLog("remaining string: </p>%s", *curPos);
+        dumpBuffer(curPos, buffer);
 
         treeLog("Parsing left subtree");
-        SAFE_CALL(parseNode(curPos, &(*cur)->left));
+        SAFE_CALL(parseNode(curPos, &(*cur)->left, buffer));
         treeLog("Parsed left subtree");
         TREE_DUMP(*cur, "Parsed left subtree", AK_SUCCESS);
 
 
         treeLog("Parsing right subtree");
-        SAFE_CALL(parseNode(curPos, &(*cur)->right));
+        SAFE_CALL(parseNode(curPos, &(*cur)->right, buffer));
         treeLog("Parsed right subtree");
         TREE_DUMP(*cur, "Parsed right subtree", AK_SUCCESS);
 
@@ -100,18 +117,20 @@ int parseNode(char** curPos, treeNode_t** cur) {
         (*curPos)++;
         skipSpaces(curPos);
         treeLog("skipped ')'");
-        treeLog("remaining string: </p>%s", *curPos);
+        dumpBuffer(curPos, buffer);
 
         return AK_SUCCESS;
     }
-    else {
-        if (strncmp(*curPos, NULL_NODE_STRING, 3) == 0) {
+    else if (strncmp(*curPos, NULL_NODE_STRING, 3) == 0) {
             treeLog("found nil node");
             *curPos += strlen(NULL_NODE_STRING);
 
-            treeLog("Skipped nil, remaining str: %s", *curPos);
+            treeLog("Skipped nil");
+            dumpBuffer(curPos, buffer);
+
             return AK_SUCCESS;
         }
+    else {
         RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
     }
 }
@@ -123,7 +142,7 @@ void readUserAnswer(char inp[MAX_LINE_LENGTH]) {
 
 void writeNodeRec(treeNode_t* node, FILE* file) {
     if (node == NULL) {
-        fprintf(file, "nil");
+        fprintf(file, NULL_NODE_STRING);
     }
     else {
         fprintf(file, "(\"%s\"", getData(node));

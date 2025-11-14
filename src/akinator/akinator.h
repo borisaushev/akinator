@@ -30,7 +30,7 @@ const char* const AKINATOR_OPTIONS = "options: \n"
 const char AK_RESTRICTED_CHARACTERS[] = {'(', ')', '\'', '"'};
 
 
-const int MAX_LINE_LENGTH = 100;
+const int MAX_LINE_LENGTH = 10000;
 const int MAX_INPUT_SIZE = 100000;
 const char* const AKINATOR_FILE_PATH = "../files/akinator/akinator.txt";
 

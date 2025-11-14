@@ -37,7 +37,9 @@ static int initTree(akinatorInfo_t* akinatorInfo) {
     SAFE_CALL(readFile(AKINATOR_FILE_PATH, &akinatorInfo->buffer, &bytesRead));
 
     char* cur = akinatorInfo->buffer;
-    SAFE_CALL(parseNode(&cur, &akinatorInfo->root));
+    char* buffer = strdup(cur);
+    SAFE_CALL(parseNode(&cur, &akinatorInfo->root, buffer));
+    free(buffer);
 
     fclose(file);
 
