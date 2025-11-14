@@ -9,7 +9,7 @@ long get_file_size(const char* filename);
 
 void skipSpaces(char** curPos);
 
-int read_file(const char *file_path, char** text, int* bytes_read);
+int readFile(const char *file_path, char** text, int* bytes_read);
 
 int parseNode(char** curPos, treeNode_t** cur);
 

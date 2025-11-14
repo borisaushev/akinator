@@ -21,6 +21,15 @@ const char* const AKINATOR_LINKERS[] = {
 };
 const int LINKERS_COUNT = sizeof(AKINATOR_LINKERS) / sizeof(AKINATOR_LINKERS[0]);
 
+const char* const AKINATOR_OPTIONS = "options: \n"
+        "\t'guess' - play akinator guess game\n"
+        "\t'describe' - give a definition of a character\n"
+        "\t'compare' - compare characters\n"
+        "\t'exit' - end program\n";
+
+const char AK_RESTRICTED_CHARACTERS[] = {'(', ')', '\'', '"'};
+
+
 const int MAX_LINE_LENGTH = 100;
 const int MAX_INPUT_SIZE = 100000;
 const char* const AKINATOR_FILE_PATH = "../files/akinator/akinator.txt";

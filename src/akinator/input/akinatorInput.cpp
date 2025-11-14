@@ -20,7 +20,7 @@ void skipSpaces(char** curPos) {
     }
 }
 
-int read_file(const char *file_path, char** text, int* bytes_read) {
+int readFile(const char *file_path, char** text, int* bytes_read) {
     int stream = open(file_path, 0);
 
     long file_size = get_file_size(file_path);
@@ -55,9 +55,11 @@ int parseNode(char** curPos, treeNode_t** cur) {
         treeLog("Read '(' ");
         skipSpaces(curPos);
         (*curPos)++;
-        skipSpaces(curPos);
+
         treeLog("skipped '('");
         treeLog("remaining string: </p>%s", *curPos);
+
+        skipSpaces(curPos);
         if (**curPos != '"') {
             treeLog("expected '\"'");
             RETURN_ERR(AK_FILE_NOT_FOUND, "expected '\"'");
@@ -110,9 +112,7 @@ int parseNode(char** curPos, treeNode_t** cur) {
             treeLog("Skipped nil, remaining str: %s", *curPos);
             return AK_SUCCESS;
         }
-        else {
-            RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
-        }
+        RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
     }
 }
 

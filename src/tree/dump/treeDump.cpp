@@ -9,11 +9,11 @@ const char* getPointerColor(void* ptr) {
     return TREE_POINTER_COLORS[color_index];
 }
 
-static void addNodeInfo(FILE* file, int index, treeNode_t* node) {
-    fprintf(file, "Node_%d [shape=Mrecord; style=filled; fillcolor = \"#56db70\"; "
+static void addNodeInfo(FILE* file, int index, treeNode_t* node, const char* const fillColor) {
+    fprintf(file, "Node_%d [shape=Mrecord; style=filled; fillcolor = \"%s\"; "
                   "color = \"black\"; "
                   "label = <{ptr: <font color=\"%s\">%p</font> | val: %s | ",
-            index, getPointerColor(node), node, getData(node));
+            index, fillColor, getPointerColor(node), node, getData(node));
 
     if (getLeft(node) != NULL) {
         fprintf(file, "{L: <font color=\"%s\">%p</font>",
@@ -32,7 +32,7 @@ static void addNodeInfo(FILE* file, int index, treeNode_t* node) {
     }
 }
 
-static void addNodesRec(FILE* file, treeNode_t* curNode, int* counter) {
+static void addNodesRec(FILE* file, treeNode_t* curNode, int* counter, const char* const fillColor) {
     int curIndex = *counter;
 
     treeNode_t* children[] = {getLeft(curNode), getRight(curNode)};
@@ -40,20 +40,20 @@ static void addNodesRec(FILE* file, treeNode_t* curNode, int* counter) {
         treeNode_t* child = children[i];
         if (child != NULL) {
             *counter = *counter + 1;
-            addNodeInfo(file, *counter, child);
+            addNodeInfo(file, *counter, child, fillColor);
             fprintf(file, "Node_%d->Node_%d\n", curIndex, *counter);
-            addNodesRec(file, child, counter);
+            addNodesRec(file, child, counter, fillColor);
         }
     }
 }
 
-static void generateDotFile(treeNode_t* node, FILE *dotFile) {
+static void generateDotFile(treeNode_t* node, FILE *dotFile, const char* const fillColor) {
     assert(dotFile);
     fprintf(dotFile, "digraph G {\n");
 
     int counter = 0;
-    addNodeInfo(dotFile, 0, node);
-    addNodesRec(dotFile, node, &counter);
+    addNodeInfo(dotFile, 0, node, fillColor);
+    addNodesRec(dotFile, node, &counter, fillColor);
 
     fprintf(dotFile, "}\n");
 }
@@ -87,7 +87,7 @@ int treeLog(const char* message, ...) {
 }
 
 int treeDump(treeNode_t* node, const char* desc, const char* file,
-             const int   line, const char* func, int code) {
+             const int   line, const char* func, int code, const char* const fillColor) {
     static size_t counter = 0;
 
     FILE* htmlFile = fopen(HTML_FILE_PATH, counter++ == 0 ? "w" : "a");
@@ -105,7 +105,7 @@ int treeDump(treeNode_t* node, const char* desc, const char* file,
         fclose(htmlFile);
         RETURN_ERR(TR_CANT_OPEN_FILE, "cannot create DOT file");
     }
-    generateDotFile(node, dot_file);
+    generateDotFile(node, dot_file, fillColor);
     fclose(dot_file);
 
     // Генерируем PNG

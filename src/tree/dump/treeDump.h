@@ -26,12 +26,14 @@ const char* const TREE_POINTER_COLORS[] = {
     "darkorange"
 };
 
-int treeDump(treeNode_t* node, const char* desc, const char* file, const int line, const char* func, int code);
+int treeDump(treeNode_t* node, const char* desc, const char* file, const int line, const char* func, int code, const char* fillColor);
 int treeLog(const char* message, ...);
 
 #ifdef DEBUG_TREE
+    #define TREE_DUMP_COLORED(node, desc, error_code, fillColor) \
+        treeDump(node, desc, __FILE__, __LINE__, __func__, error_code, fillColor)
     #define TREE_DUMP(node, desc, error_code) \
-        treeDump(node, desc, __FILE__, __LINE__, __func__, error_code)
+        TREE_DUMP_COLORED(node, desc, error_code, "#56db70")
     #define TREE_VALID(node) \
         BEGIN \
             int valid ## __LINE__ = validateTree(node); \
@@ -42,6 +44,7 @@ int treeLog(const char* message, ...);
             } \
         END
 #else
+    #define TREE_DUMP_COLORED(node, desc, error_code, fillColor) ;
     #define TREE_VALID(list) ;
     #define TREE_DUMP(list, desc, error_code) ;
 #endif
