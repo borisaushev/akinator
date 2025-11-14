@@ -80,7 +80,7 @@ int treeLog(const char* message, ...) {
         vfprintf(htmlFile, message, args);
         va_end(args);
 
-        fprintf(htmlFile, "</div>\n");
+        fprintf(htmlFile, "\n</div>\n");
         fclose(htmlFile);
     #endif
     return TR_SUCCESS;

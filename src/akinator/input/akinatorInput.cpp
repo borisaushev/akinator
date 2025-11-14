@@ -51,13 +51,13 @@ int readFile(const char *file_path, char** text, int* bytes_read) {
 
 void dumpBuffer(char **curPos, const char *buffer) {
     char dumpString[MAX_LINE_LENGTH] = {};
-    strcat(dumpString, "buffer:</p><font color=\"#00bfff\">");
+    strcat(dumpString, "buffer:\n\t</p>\n\t<font color=\"#00bfff\">\n\t\t");
     strncat(dumpString, buffer,  strlen(buffer) - strlen(*curPos));
-    strcat(dumpString, "</font>");
+    strcat(dumpString, "\n\t</font>\n");
 
-    strcat(dumpString, "<font color=\"#0e2466\">");
+    strcat(dumpString, "\t<font color=\"#0e2466\">\n\t\t");
     strcat(dumpString, *curPos);
-    strcat(dumpString, "</font>");
+    strcat(dumpString, "\n\t</font>");
 
     treeLog(dumpString);
 }
@@ -86,7 +86,6 @@ int parseNode(char** curPos, treeNode_t** cur, const char* buffer) {
             RETURN_ERR(AK_INVALID_INPUT, "invalid input tree");
         }
 
-        char chBuf = *end;
         *end = '\0';
         createNode(*curPos + 1, false, cur);
         treeLog("Created new node");
@@ -103,7 +102,6 @@ int parseNode(char** curPos, treeNode_t** cur, const char* buffer) {
         SAFE_CALL(parseNode(curPos, &(*cur)->left, buffer));
         treeLog("Parsed left subtree");
         TREE_DUMP(*cur, "Parsed left subtree", AK_SUCCESS);
-
 
         treeLog("Parsing right subtree");
         SAFE_CALL(parseNode(curPos, &(*cur)->right, buffer));

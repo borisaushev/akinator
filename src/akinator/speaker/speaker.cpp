@@ -6,7 +6,7 @@
 #include "akinator.h"
 
 
-static char speech_buffer[MAX_SPEECH_BUFFER_SIZE] = {0};
+static char speechBuffer[MAX_SPEECH_BUFFER_SIZE] = {};
 static size_t bufferPosition = 0;
 
 void speakFlush() {
@@ -17,12 +17,12 @@ void speakFlush() {
     char command[MAX_SPEECH_BUFFER_SIZE * 2] = {};
     snprintf(command, sizeof(command),
              AKINATOR_SPEAK_COMMAND,
-             speech_buffer);
+             speechBuffer);
 
     system(command);
 
     bufferPosition = 0;
-    speech_buffer[0] = '\0';
+    speechBuffer[0] = '\0';
 }
 
 void speak(const char* format, ...) {
@@ -39,6 +39,6 @@ void speak(const char* format, ...) {
         speakFlush();
     }
 
-    strcat(speech_buffer + bufferPosition, formatted_text);
+    strcat(speechBuffer + bufferPosition, formatted_text);
     bufferPosition += (size_t) chars_written;
 }

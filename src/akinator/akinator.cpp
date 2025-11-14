@@ -222,6 +222,10 @@ static int describeCharacter(treeNode_t* root) {
 static int distributeProperties(stack_t* propertyStack1, stack_t* propertyStack2,
                          stack_t* char1Unique,    stack_t* char2Unique,
                          stack_t* commonProperties) {
+    initStack(commonProperties, STACK_BASE_SIZE);
+    initStack(char1Unique, STACK_BASE_SIZE);
+    initStack(char2Unique, STACK_BASE_SIZE);
+
     characterProperty prop1 = {}, prop2 = {};
     //Общие свойства
     while (getStackElementCount(propertyStack1) > 0 && getStackElementCount(propertyStack2) > 0) {
@@ -249,66 +253,84 @@ static int distributeProperties(stack_t* propertyStack1, stack_t* propertyStack2
     return AK_SUCCESS;
 }
 
-static int compareCharacters(treeNode_t* root) {
+static int showDifferences(char character1[MAX_INPUT_SIZE], char character2[MAX_INPUT_SIZE],
+                           stack_t* char1Unique,    stack_t* char2Unique,
+                           stack_t* commonProperties) {
+    if (getStackElementCount(commonProperties) > 0) {
+        printf("\nBoth %s and %s are:\n", character1, character2);
+        speak("Both %s and %s are", character1, character2);
+        SAFE_CALL(printAndSpeakProperties(commonProperties));
+    }
+
+    if (getStackElementCount(char1Unique) > 0) {
+        printf("\nUnlike %s, %s is:\n", character2, character1);
+        speak("Unlike %s %s is", character2, character1);
+        SAFE_CALL(printAndSpeakProperties(char1Unique));
+    }
+
+    if (getStackElementCount(char2Unique) > 0) {
+        printf("\n%s, unlike %s, is:\n", character2, character1);
+        speak("%s unlike %s is", character2, character1);
+        SAFE_CALL(printAndSpeakProperties(char2Unique));
+    }
+
+    return AK_SUCCESS;
+}
+
+static int getCharactersProperties(treeNode_t *root,
+                                   char* character1, stack_t* propertyStack1,
+                                   char* character2, stack_t* propertyStack2) {
     printf("Which character do you want me to compare?\n");
-    char character1[MAX_LINE_LENGTH];
     readUserAnswer(character1);
 
-    stack_t propertyStack1 = {};
-    initStack(&propertyStack1, STACK_BASE_SIZE);
-    if (!describeRec(root, character1, &propertyStack1)) {
+    propertyStack1 = {};
+    initStack(propertyStack1, STACK_BASE_SIZE);
+    if (!describeRec(root, character1, propertyStack1)) {
         printf(" - character was not found =(\n");
         return AK_SUCCESS;
     }
 
     printf("Which character do you want me to compare %s to?\n", character1);
-    char character2[MAX_LINE_LENGTH];
     readUserAnswer(character2);
 
-    stack_t propertyStack2 = {};
-    initStack(&propertyStack2, STACK_BASE_SIZE);
-    if (!describeRec(root, character2, &propertyStack2)) {
+    propertyStack2 = {};
+    initStack(propertyStack2, STACK_BASE_SIZE);
+    if (!describeRec(root, character2, propertyStack2)) {
         printf(" - character was not found =(\n");
         return AK_SUCCESS;
     }
+
+    return AK_SUCCESS;
+}
+
+static int compareCharacters(treeNode_t* root) {
+    char character1[MAX_INPUT_SIZE];
+    stack_t propertyStack1;
+
+    char character2[MAX_INPUT_SIZE];
+    stack_t propertyStack2;
+
+    SAFE_CALL(getCharactersProperties(root, character1, &propertyStack1,
+                                            character2, &propertyStack2));
 
     // разделяем свойства
     stack_t commonProperties = {};
     stack_t char1Unique = {};
     stack_t char2Unique = {};
-    initStack(&commonProperties, STACK_BASE_SIZE);
-    initStack(&char1Unique, STACK_BASE_SIZE);
-    initStack(&char2Unique, STACK_BASE_SIZE);
 
     SAFE_CALL(distributeProperties(&propertyStack1, &propertyStack2,
                                    &char1Unique,    &char2Unique,
                                    &commonProperties));
 
-    if (getStackElementCount(&commonProperties) > 0) {
-        printf("\nBoth %s and %s are:\n", character1, character2);
-        speak("Both %s and %s are", character1, character2);
-        SAFE_CALL(printAndSpeakProperties(&commonProperties));
-    }
-
-    if (getStackElementCount(&char1Unique) > 0) {
-        printf("\nUnlike %s, %s is:\n", character2, character1);
-        speak("Unlike %s %s is", character2, character1);
-        SAFE_CALL(printAndSpeakProperties(&char1Unique));
-    }
-
-    if (getStackElementCount(&char2Unique) > 0) {
-        printf("\n%s, unlike %s, is:\n", character2, character1);
-        speak("%s unlike %s is", character2, character1);
-        SAFE_CALL(printAndSpeakProperties(&char2Unique));
-    }
-
+    SAFE_CALL(showDifferences(character1,    character2,
+                              &char1Unique, &char2Unique,
+                              &commonProperties));
     speakFlush();
 
-    stackDestroy(&commonProperties);
-    stackDestroy(&char1Unique);
-    stackDestroy(&char2Unique);
-    stackDestroy(&propertyStack1);
-    stackDestroy(&propertyStack2);
+    stack* stacks[] = {&commonProperties, &char1Unique, &char2Unique, &propertyStack1, &propertyStack2};
+    for (int i = 0; i < sizeof(stacks) / sizeof(stacks[0]); i++) {
+        stackDestroy(stacks[i]);
+    }
 
     return AK_SUCCESS;
 }
