@@ -2,11 +2,12 @@
 
 #include <cstdarg>
 
+#include "akinator.h"
+
 
 const char* getPointerColor(void* ptr) {
-    size_t color_count = sizeof(TREE_POINTER_COLORS) / sizeof(TREE_POINTER_COLORS[0]);
-    size_t color_index = (size_t)ptr % color_count;
-    return TREE_POINTER_COLORS[color_index];
+    size_t colorIndex = (size_t)ptr % COLOR_COUNT;
+    return TREE_POINTER_COLORS[colorIndex];
 }
 
 static void addNodeInfo(FILE* file, int index, treeNode_t* node, const char* const fillColor) {
@@ -15,20 +16,21 @@ static void addNodeInfo(FILE* file, int index, treeNode_t* node, const char* con
                   "label = <{ptr: <font color=\"%s\">%p</font> | val: %s | ",
             index, fillColor, getPointerColor(node), node, getData(node));
 
+    //NOTE: добавить да и нет (Захар)
     if (getLeft(node) != NULL) {
-        fprintf(file, "{L: <font color=\"%s\">%p</font>",
+        fprintf(file, "{L(ДА): <font color=\"%s\">%p</font>",
                 getPointerColor(getLeft(node)), getLeft(node));
     }
     else {
-        fprintf(file, "{L: <font color=\"blue\">NULL</font>");
+        fprintf(file, "{L(ДА): <font color=\"blue\">NULL</font>");
     }
 
     if (getRight(node) != NULL) {
-        fprintf(file, " | R: <font color=\"%s\">%p</font>}}>; ]\n",
+        fprintf(file, " | R(НЕТ): <font color=\"%s\">%p</font>}}>; ]\n",
                 getPointerColor(getRight(node)), getRight(node));
     }
     else {
-        fprintf(file, " | R: <font color=\"blue\"> NULL</font>}}>; ]\n");
+        fprintf(file, " | R(НЕТ): <font color=\"blue\"> NULL</font>}}>; ]\n");
     }
 }
 
@@ -95,7 +97,7 @@ int treeDump(treeNode_t* node, const char* desc, const char* file,
         RETURN_ERR(TR_CANT_OPEN_FILE, "Cannot open HTML log file");
     }
 
-    char svg_filename[256] = {};
+    char svg_filename[MAX_LINE_LENGTH] = {};
     snprintf(svg_filename, sizeof(svg_filename), SVG_FORMAT, counter);
     fillHtmlHeader(desc, file, line, func, code, htmlFile, counter);
 
@@ -109,7 +111,7 @@ int treeDump(treeNode_t* node, const char* desc, const char* file,
     fclose(dot_file);
 
     // Генерируем PNG
-    char command[512];
+    char command[MAX_LINE_LENGTH];
     snprintf(command, sizeof(command), "dot -T svg %s -o %s",
              DOT_FILE_PATH, svg_filename);
     int result = system(command);

@@ -11,10 +11,6 @@
 #include "akinatorInput.h"
 #include "speaker.h"
 
-typedef struct akinatorInfo {
-    treeNode* root;
-    char* buffer;
-} akinatorInfo_t;
 
 static void getNextNode(treeNode_t** cur, char inp[MAX_LINE_LENGTH]) {
     if (strcmp(inp, "yes") == 0) {
@@ -58,41 +54,42 @@ static bool containsRestrictedCharacters(char* input) {
     return false;
 }
 
+//Note: баг с cur, надо разобраться с указателями (Захар)
 static int addNewCharacter(treeNode_t* root, treeNode_t* cur) {
     TREE_DUMP(root, "BEFORE ADD NEW CHARACTER", AK_SUCCESS);
 
     printf("Who was your character?\n");
 
-    char inp[MAX_LINE_LENGTH];
-    readUserAnswer(inp);
-    if (containsRestrictedCharacters(inp)) {
+    char input[MAX_LINE_LENGTH] = {};
+    readUserAnswer(input);
+    if (containsRestrictedCharacters(input)) {
         printf("Input contains restricted character\n");
         return AK_SUCCESS;
     }
 
     //Нод для нового персонажа
     treeNode_t* newCharacterNode = {};
-    SAFE_CALL(createNode(inp, true, &newCharacterNode));
-    setDataCopy(newCharacterNode, inp);
+    SAFE_CALL(createNode(input, true, &newCharacterNode));
+    setDataCopy(newCharacterNode, input);
 
     //Нод для старого персонажа
     treeNode_t* prevCharacterNode = {};
-    SAFE_CALL(createNode(getData(cur), true, &prevCharacterNode));
-    setDataCopy(prevCharacterNode, getData(cur));
+    SAFE_CALL(createNode(getData(cur), cur->shouldFree, &prevCharacterNode));
 
     printf("Whats the difference between %s and %s?\n",
            getData(newCharacterNode), getData(cur));
     printf("%s...", getData(newCharacterNode));
 
-    readUserAnswer(inp);
-    if (containsRestrictedCharacters(inp)) {
+    readUserAnswer(input);
+    if (containsRestrictedCharacters(input)) {
         printf("Input contains restricted character\n");
         return AK_SUCCESS;
     }
 
     printf("\n");
 
-    setDataCopy(cur, inp);
+    setDataCopy(cur, input);
+    cur->shouldFree = true;
     setLeft(cur, newCharacterNode);
     setRight(cur, prevCharacterNode);
 
@@ -102,7 +99,7 @@ static int addNewCharacter(treeNode_t* root, treeNode_t* cur) {
     return AK_SUCCESS;
 }
 
-static int guessCharacter(treeNode_t* root) {
+int guessCharacter(treeNode_t* root) {
     treeNode_t* cur = root;
     char inp[MAX_LINE_LENGTH] = {};
     while (getRight(cur) != NULL) {
@@ -190,21 +187,20 @@ static int printAndSpeakProperties(stack_t* properties) {
     return AK_SUCCESS;
 }
 
-static int describeCharacter(treeNode_t* root) {
+//TODO утечка памяти
+int describeCharacter(treeNode_t* root) {
     printf("Which character do you want me to describe?\n");
 
     char character[MAX_LINE_LENGTH];
     readUserAnswer(character);
-    if (containsRestrictedCharacters(character)) {
-        printf("Input contains restricted character\n");
-        return AK_SUCCESS;
-    }
 
     stack_t propertyStack = {};
     initStack(&propertyStack, STACK_BASE_SIZE);
-
     if (!describeRec(root, character, &propertyStack)) {
         printf(" - character was not found =(\n");
+        //Note утечка памяти(Андрей)
+        stackDestroy(&propertyStack);
+
         return AK_SUCCESS;
     }
 
@@ -220,21 +216,23 @@ static int describeCharacter(treeNode_t* root) {
 }
 
 static int distributeProperties(stack_t* propertyStack1, stack_t* propertyStack2,
-                         stack_t* char1Unique,    stack_t* char2Unique,
-                         stack_t* commonProperties) {
+                                stack_t* char1Unique,    stack_t* char2Unique,
+                                stack_t* commonProperties) {
     initStack(commonProperties, STACK_BASE_SIZE);
-    initStack(char1Unique, STACK_BASE_SIZE);
-    initStack(char2Unique, STACK_BASE_SIZE);
+    initStack(char1Unique,      STACK_BASE_SIZE);
+    initStack(char2Unique,      STACK_BASE_SIZE);
 
     characterProperty prop1 = {}, prop2 = {};
     //Общие свойства
+    //NOTE: можно обойтись 3-мя стеками (Андрей)
     while (getStackElementCount(propertyStack1) > 0 && getStackElementCount(propertyStack2) > 0) {
         SAFE_CALL(stackPop(propertyStack1, &prop1));
         SAFE_CALL(stackPop(propertyStack2, &prop2));
 
         if (strcmp(prop1.question, prop2.question) == 0 && prop1.answer == prop2.answer) {
             SAFE_CALL(stackPush(commonProperties, prop1));
-        } else {
+        }
+        else {
             SAFE_CALL(stackPush(char1Unique, prop1));
             SAFE_CALL(stackPush(char2Unique, prop2));
         }
@@ -277,47 +275,40 @@ static int showDifferences(char character1[MAX_INPUT_SIZE], char character2[MAX_
     return AK_SUCCESS;
 }
 
-static int getCharactersProperties(treeNode_t *root,
+static void getCharactersProperties(treeNode_t *root,
                                    char* character1, stack_t* propertyStack1,
                                    char* character2, stack_t* propertyStack2) {
     printf("Which character do you want me to compare?\n");
     readUserAnswer(character1);
 
-    propertyStack1 = {};
     initStack(propertyStack1, STACK_BASE_SIZE);
     if (!describeRec(root, character1, propertyStack1)) {
         printf(" - character was not found =(\n");
-        return AK_SUCCESS;
     }
 
     printf("Which character do you want me to compare %s to?\n", character1);
     readUserAnswer(character2);
 
-    propertyStack2 = {};
     initStack(propertyStack2, STACK_BASE_SIZE);
     if (!describeRec(root, character2, propertyStack2)) {
         printf(" - character was not found =(\n");
-        return AK_SUCCESS;
     }
-
-    return AK_SUCCESS;
 }
 
-static int compareCharacters(treeNode_t* root) {
+int compareCharacters(treeNode_t* root) {
+    stack_t propertyStack1 = {};
+    stack_t propertyStack2 = {};
     char character1[MAX_INPUT_SIZE];
-    stack_t propertyStack1;
-
     char character2[MAX_INPUT_SIZE];
-    stack_t propertyStack2;
 
-    SAFE_CALL(getCharactersProperties(root, character1, &propertyStack1,
-                                            character2, &propertyStack2));
+    getCharactersProperties(root, character1, &propertyStack1,
+                                  character2, &propertyStack2);
 
     // разделяем свойства
+    //Note утечка памяти
     stack_t commonProperties = {};
     stack_t char1Unique = {};
     stack_t char2Unique = {};
-
     SAFE_CALL(distributeProperties(&propertyStack1, &propertyStack2,
                                    &char1Unique,    &char2Unique,
                                    &commonProperties));
@@ -335,6 +326,18 @@ static int compareCharacters(treeNode_t* root) {
     return AK_SUCCESS;
 }
 
+
+static AkinatorCommandFunc getCommandFunction(char* input) {
+    for (size_t i = 0; i < AKINATOR_COMMANDS_COUNT; i++) {
+        akinatorCommandsInfo_t curCommand = AKINATOR_COMMANDS[i];
+        if (strncmp(input, curCommand.commandName, strlen(curCommand.commandName)) == 0) {
+            return curCommand.function;
+        }
+    }
+
+    return NULL;
+}
+
 int runAkinator() {
     akinatorInfo_t akinatorInfo = {};
     BB_TRY {
@@ -342,14 +345,9 @@ int runAkinator() {
         printf(AKINATOR_OPTIONS);
         char inp[MAX_LINE_LENGTH] = {};
         for (readUserAnswer(inp); strcmp(inp, "exit") != 0 ; readUserAnswer(inp)) {
-            if (strcmp(inp, "guess") == 0) {
-                BB_CHECKED(guessCharacter(akinatorInfo.root));
-            }
-            else if (strcmp(inp, "describe") == 0) {
-                SAFE_CALL(describeCharacter(akinatorInfo.root));
-            }
-            else if (strcmp(inp, "compare") == 0) {
-                SAFE_CALL(compareCharacters(akinatorInfo.root));
+            AkinatorCommandFunc commandFunction = getCommandFunction(inp);
+            if (commandFunction != NULL) {
+                BB_CHECKED(commandFunction(akinatorInfo.root));
             }
             else {
                 printf("invalid command\n");

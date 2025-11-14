@@ -1,7 +1,15 @@
 cmake_minimum_required(VERSION 4.0)
 project(akinator)
 
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "11.0")
+    message(WARNING "Your MinGW version might be too old. Consider upgrading.")
+else ()
+    message("version: ${CMAKE_CXX_COMPILER_VERSION}")
+endif()
+
+
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(akinator ${SOURCES})
@@ -31,7 +39,7 @@ function(set_option target_name)
             C:/Users/bossb/OneDrive/Desktop/ded/TXLib-master
     )
 
-  target_compile_definitions(${target_name} PRIVATE DEBUG DEBUG_TREE)
+#  target_compile_definitions(${target_name} PRIVATE DEBUG DEBUG_TREE)
 
     target_compile_options(${target_name} PRIVATE
             -Wshadow

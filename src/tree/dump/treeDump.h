@@ -25,6 +25,7 @@ const char* const TREE_POINTER_COLORS[] = {
     "deeppink",
     "darkorange"
 };
+const size_t COLOR_COUNT = sizeof(TREE_POINTER_COLORS) / sizeof(TREE_POINTER_COLORS[0]);
 
 int treeDump(treeNode_t* node, const char* desc, const char* file, const int line, const char* func, int code, const char* fillColor);
 int treeLog(const char* message, ...);
